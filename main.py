@@ -1,8 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from starlette.requests import Request as Rq
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-import httpx, os, sqlite3  # Import required modules   
+import httpx, os, sqlite3 # Import required modules   
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,6 +22,16 @@ app.add_middleware(
     allow_methods=["*"],  
     allow_headers=["*"],
 )
+
+# Mount the static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Used Jinja2Templates to render HTML file
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/", response_class=HTMLResponse)
+async def load_index(request: Rq):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 # Load environment variables    
 TELEX_CHANNEL_WEBHOOK = os.getenv("TELEX_CHANNEL_WEBHOOK")
