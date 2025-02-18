@@ -147,7 +147,7 @@ async def get_integration_json(request: Request):
                 "app_url": base_url,
                 "background_color": "#00fbff"
             },
-            "integration_category": "Internal",
+            "integration_category": "Project Management",
             "integration_type": "interval",
             "is_active": True,
             "key_features": [
