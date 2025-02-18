@@ -167,19 +167,7 @@ async def get_integration_json(request: Request):
                     "default": "0 9 * * *"  # Default set to every day at 9 AM in your timezone.
                 }
             ],
-            "endpoints": [
-      {
-        "path": "/add-task",
-        "method": "POST",
-        "description": "adds a new task and time to the reminder list",
-      },
-      {
-        "path": "/list-tasks",
-        "method": "GET",
-        "description": "lists all task scheduled for that day",
-      }
-      ],
-        "tick_url": f"{base_url}/tick"
+            "tick_url": f"{base_url}/tick"
         }
     }
     return integration_json
