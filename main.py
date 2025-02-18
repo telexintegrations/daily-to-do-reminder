@@ -178,7 +178,7 @@ async def get_integration_json(request: Request):
                     "label": "interval",
                     "type": "text",
                     "required": True,
-                    "default": "0 9 * * *"  # Default set to every day at 9 AM in your timezone.
+                    "default": "* * * * *"  # Default set to every min your timezone.
                 }
             ],
             "endpoints": [
