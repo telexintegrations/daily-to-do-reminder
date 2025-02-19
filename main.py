@@ -37,7 +37,7 @@ async def load_index(request: Rq):
 # Load environment variables    
 DEFAULT_REMINDER_TIME = os.getenv("DEFAULT_REMINDER_TIME")  # Default time interval
 
-# Initializes SQLite Database
+# Initializes Database
 DB_FILE = "reminders.db"
 
 def init_db():
@@ -58,7 +58,7 @@ def init_db():
 init_db()  # Ensures DB is initialized
 
 def get_reminders():
-    """Fetches stored reminders from SQLite."""
+    """Fetches stored reminders from DB."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("SELECT date, time, task FROM reminders")
@@ -69,7 +69,7 @@ def get_reminders():
     return reminders
 
 def save_reminder(date, time, task):
-    """Saves a new reminder to SQLite."""
+    """Saves a new reminder to DB."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("INSERT INTO reminders (date, time, task) VALUES (?, ?, ?)", (date, time, task))
@@ -163,6 +163,7 @@ async def add_task(request: Request):
     
     if time < current_time:
         raise HTTPException(status_code=400, detail="Time cannot be in the past")
+    
     save_reminder(date, time, task)
 
     return {"message": "Task added successfully!"}
@@ -216,7 +217,7 @@ async def get_integration_json(request: Request):
                     "label": "interval",
                     "type": "text",
                     "required": True,
-                    "default": "* * * * *"  # Default set to every minute in your timezone.
+                    "default": "59 * * * *"  # Default set to every minute in your timezone.
                 }
             ],
             "endpoints": [
