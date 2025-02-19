@@ -15,7 +15,7 @@ async function addTask() {
         alert("Date cannot be in the past");
         return;
     }
-    if (date === new Date().toISOString().split('T')[0] && time < new Date().toLocaleTimeString()) {
+    if (date === new Date().toISOString().split('T')[0] && time < new Date().toTimeString().split(' ')[0].substring(0, 5)) {
         alert("Time cannot be in the past");
         return;
     }
