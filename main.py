@@ -1,13 +1,12 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request as Rq
 from datetime import datetime, timezone
-from pydantic import BaseModel
 from dotenv import load_dotenv
-import httpx, os, sqlite3 # Import required modules   
+import httpx, os, sqlite3 # Imports required modules   
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,10 +24,6 @@ app.add_middleware(
 )
 
 
-class ReminderPayload(BaseModel):
-    channel_id: str
-    return_url: str
-
 # Mount the static directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -40,10 +35,9 @@ async def load_index(request: Rq):
     return templates.TemplateResponse("index.html", {"request": request})
 
 # Load environment variables    
-TELEX_CHANNEL_WEBHOOK = os.getenv("TELEX_CHANNEL_WEBHOOK")
-DEFAULT_REMINDER_TIME = os.getenv("DEFAULT_REMINDER_TIME")  # Default reminder time
+DEFAULT_REMINDER_TIME = os.getenv("DEFAULT_REMINDER_TIME")  # Default time interval
 
-# Initialize SQLite Database
+# Initializes SQLite Database
 DB_FILE = "reminders.db"
 
 def init_db():
@@ -61,7 +55,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()  # Ensure DB is initialized
+init_db()  # Ensures DB is initialized
 
 def get_reminders():
     """Fetches stored reminders from SQLite."""
@@ -70,7 +64,7 @@ def get_reminders():
     cursor.execute("SELECT date, time, task FROM reminders")
     reminders = {}
     for date, time, task in cursor.fetchall():
-        reminders.setdefault(date, []).append(f"{time} - {task}")
+        reminders.setdefault(date, []).append(f"{task} - {time}")
     conn.close()
     return reminders
 
@@ -114,18 +108,17 @@ def delete_elapsed_reminders(date):
 
 
 @app.post("/tick")
-async def tick(request: Request, payload: ReminderPayload):
+async def tick(request: Request):
     """Triggered by Telex at a scheduled interval to send daily reminders."""
     data = await request.json()
-    print(data)
-    payload.return_url = data.get("return_url")
+    return_url = data.get("return_url")
     
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     reminders = get_reminders()
     tasks = reminders.get(today, ["No pending tasks!"])
 
     # Format tasks into a message
-    message = "\n".join([f"- {task}" for task in tasks])
+    message = "\n".join([f"{task}" for task in tasks])
     result = {"message": f"\U0001F4DD Daily To-Do List:\n{message}",
                "username": "Daily To-Do Reminder", 
                "event_name": "Reminder", 
@@ -139,7 +132,7 @@ async def tick(request: Request, payload: ReminderPayload):
     if message:
             async with httpx.AsyncClient() as client:
                  try:
-                      response = await client.post(payload.return_url, json=result, headers=headers)
+                      response = await client.post(return_url, json=result, headers=headers)
                       response.raise_for_status()
                  except httpx.HTTPStatusError as e:
                      return {"status": "error", "detail": f"Failed to send reminder: {e.response.status_code}"}
@@ -155,14 +148,17 @@ async def add_task(request: Request):
     """
     Adds a new task to the reminder list.
     """
-    default_date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    DEFAULT_DATE = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     data = await request.json()
     task = data.get("task")
     time = data.get("time", DEFAULT_REMINDER_TIME)  # Use default time if no time provided
-    date = data.get("date", default_date) # uses default date if none provided 
+    date = data.get("date", DEFAULT_DATE) # uses default date if none provided 
 
     if not task:
         return {"error": "Task cannot be empty"}
+    
+    if date < DEFAULT_DATE:
+        raise HTTPException(status_code=400, detail="Date cannot be in the past")
 
     save_reminder(date, time, task)
 
@@ -194,7 +190,7 @@ async def get_integration_json(request: Request):
                 "updated_at": datetime.now(timezone.utc).strftime('%Y-%m-%d')
             },
             "descriptions": {
-                "app_description": "A simple to-do reminder that sends tasks daily at custom times.",
+                "app_description": "A simple to-do reminder that sends reminders about tasks daily at interval.",
                 "app_logo": "https://res.cloudinary.com/dcnnysxm9/image/upload/v1739862586/to-do_reminder_xdzgb2.webp",
                 "app_name": "Daily To-Do Reminder",
                 "app_url": base_url,
