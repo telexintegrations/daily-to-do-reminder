@@ -165,5 +165,14 @@ Contributions are welcome!
 This project is licensed under the **MIT License**. Feel free to use, modify, and distribute it under the terms of the license.
 
 ---
+## here are some pictures from telex 
+
+![Telex Images](images/1.png)
+![Telex Images](images/2.png)
+![Telex Images](images/3.png)
+![Telex Images](images/4.png)
+![Telex Images](images/5.png)
+![Telex Images](images/6.png)
+
 
 Happy To-Do-ing! 😊
