@@ -49,7 +49,7 @@ uvicorn main:app
 
 ## API Endpoints
 
-### Books
+### Daily To-Do Reminder
 
 - `GET /` - homepage
 - `GET /list-tasks` - Get all tasks for today
@@ -127,7 +127,9 @@ The `/tick` endpoint accepts a `POST` request, when triggered by telex it return
     'default': '* * * * *',
     'label': 'interval', 
     'required': True, 
-    'type': 'text'}]}
+    'type': 'text'
+    }]
+    }
 ```
 
 This data will be sent by Telex each time the cron interval is reached. The default interval is defined as `59 * * * *` which means every 59 minutes according to cron-syntax. Use https://crontab.guru for help defining cron schedules. The integration reads the settings to figure out the sites that must be called immediately, then sends a response, if any, to the `return_url` provided by Telex. 
