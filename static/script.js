@@ -11,6 +11,14 @@ async function addTask() {
         alert("Task cannot be empty");
         return;
     }
+    if (date < new Date().toISOString().split('T')[0]) {
+        alert("Date cannot be in the past");
+        return;
+    }
+    if (date === new Date().toISOString().split('T')[0] && time < new Date().toLocaleTimeString()) {
+        alert("Time cannot be in the past");
+        return;
+    }
     
     try {
         const response = await fetch('https://daily-to-do-reminder.onrender.com/add-task', {
@@ -20,7 +28,7 @@ async function addTask() {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to add task');
+            throw new Error('Failed to add task, present date or time');
         }
         
         const result = await response.json();
