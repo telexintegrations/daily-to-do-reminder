@@ -13,7 +13,7 @@ async function addTask() {
     }
     
     try {
-        const response = await fetch('http://127.0.0.1:8000/add-task', {
+        const response = await fetch('https://daily-to-do-reminder.onrender.com/add-task', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({task, time, date})
@@ -35,7 +35,7 @@ async function addTask() {
 
 async function loadTasks() {
     try {
-        const response = await fetch('http://127.0.0.1:8000/list-tasks');
+        const response = await fetch('https://daily-to-do-reminder.onrender.com/list-tasks');
         
         if (!response.ok) {
             throw new Error('Failed to fetch tasks');
