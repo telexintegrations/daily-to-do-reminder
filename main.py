@@ -149,6 +149,7 @@ async def add_task(request: Request):
     Adds a new task to the reminder list.
     """
     DEFAULT_DATE = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    current_time = datetime.now(timezone.utc).strftime('%H:%M')
     data = await request.json()
     task = data.get("task")
     time = data.get("time", DEFAULT_REMINDER_TIME)  # Use default time if no time provided
@@ -159,7 +160,9 @@ async def add_task(request: Request):
     
     if date < DEFAULT_DATE:
         raise HTTPException(status_code=400, detail="Date cannot be in the past")
-
+    
+    if time < current_time:
+        raise HTTPException(status_code=400, detail="Time cannot be in the past")
     save_reminder(date, time, task)
 
     return {"message": "Task added successfully!"}
