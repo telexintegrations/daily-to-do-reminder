@@ -10,11 +10,18 @@
     <h2>Daily To-Do Reminder</h2>
     <input type="text" id="task" placeholder="Enter task...">
     <input type="time" id="time" value="09:00">
+    <input type="date" id="date">
     <button onclick="addTask()">Add Task</button>
     
     <h3>Today's Tasks</h3>
     <ul id="taskList"></ul>
-
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const dateInput = document.getElementById('date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        });
+    </script>
     <script src="static/script.js"></script>
 </body>
 </html>

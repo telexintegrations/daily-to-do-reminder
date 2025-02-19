@@ -1,8 +1,11 @@
+
 async function addTask() {
     const taskInput = document.getElementById('task');
     const timeInput = document.getElementById('time');
+    const dateInput = document.getElementById('date');
     const task = taskInput.value.trim();
     const time = timeInput.value;
+    const date = dateInput.value;
     
     if (!task) {
         alert("Task cannot be empty");
@@ -13,7 +16,7 @@ async function addTask() {
         const response = await fetch('http://127.0.0.1:8000/add-task', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({task, time})
+            body: JSON.stringify({task, time, date})
         });
         
         if (!response.ok) {
@@ -28,6 +31,7 @@ async function addTask() {
         alert("Error: " + error.message);
     }
 }
+
 
 async function loadTasks() {
     try {

@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request as Rq
 from datetime import datetime, timezone
+from pydantic import BaseModel
 from dotenv import load_dotenv
 import httpx, os, sqlite3 # Import required modules   
 
@@ -22,6 +23,11 @@ app.add_middleware(
     allow_methods=["*"],  
     allow_headers=["*"],
 )
+
+
+class ReminderPayload(BaseModel):
+    channel_id: str
+    return_url: str
 
 # Mount the static directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -76,41 +82,72 @@ def save_reminder(date, time, task):
     conn.commit()
     conn.close()
 
-def delete_today_reminders(date):
-    """Deletes reminders for a specific date."""
+def delete_elapsed_reminders(date):
+    """Deletes reminders for a specific date and time only if the time has elapsed."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM reminders WHERE date = ?", (date,))
-    conn.commit()
-    conn.close()
+    
+    try:
+        cursor.execute("SELECT id, time FROM reminders WHERE date = ?", (date,))
+        reminders = cursor.fetchall()
+        
+        current_time = datetime.now(timezone.utc).strftime('%H:%M')
+
+        for reminder_id, task_time in reminders:
+            try:
+                task_datetime = datetime.strptime(task_time, '%H:%M')
+                current_datetime = datetime.strptime(current_time, '%H:%M')
+
+                if task_datetime <= current_datetime:
+                    cursor.execute("DELETE FROM reminders WHERE id = ?", (reminder_id,))
+
+            except ValueError as e:
+                print(f"Skipping invalid time format: {task_time}, Error: {e}")
+
+        conn.commit()
+      
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        
+    finally:
+        conn.close()
+
 
 @app.post("/tick")
-async def tick(request: Request):
+async def tick(request: Request, payload: ReminderPayload):
     """Triggered by Telex at a scheduled interval to send daily reminders."""
     data = await request.json()
-    return_url = data.get("return_url", TELEX_CHANNEL_WEBHOOK)
-
+    print(data)
+    payload.return_url = data.get("return_url")
+    
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     reminders = get_reminders()
     tasks = reminders.get(today, ["No pending tasks!"])
 
     # Format tasks into a message
     message = "\n".join([f"- {task}" for task in tasks])
-    payload = {"message": f"\U0001F4DD Daily To-Do List:\n{message}"}
+    result = {"message": f"\U0001F4DD Daily To-Do List:\n{message}",
+               "username": "Daily To-Do Reminder", 
+               "event_name": "Reminder", 
+               "status": "success"
+            }
+    
+    headers = {"Content-Type": "application/json"}
+    
 
     # Send reminder message asynchronously to the Telex channel
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(return_url, json=payload)
-            response.raise_for_status()
-        except httpx.HTTPStatusError as e:
-            return {"status": "error", "detail": f"Failed to send reminder: {e.response.status_code}"}
-        except httpx.RequestError:
-            return {"status": "error", "detail": "Failed to reach Telex server"}
+    if message:
+            async with httpx.AsyncClient() as client:
+                 try:
+                      response = await client.post(payload.return_url, json=result, headers=headers)
+                      response.raise_for_status()
+                 except httpx.HTTPStatusError as e:
+                     return {"status": "error", "detail": f"Failed to send reminder: {e.response.status_code}"}
+                 except httpx.RequestError:
+                     return {"status": "error", "detail": "Failed to reach Telex server"}
 
     # Clear tasks after sending the reminder
-    delete_today_reminders(today)
-
+    delete_elapsed_reminders(today)
     return {"status": "Reminder sent successfully"}
 
 @app.post("/add-task")
@@ -118,15 +155,16 @@ async def add_task(request: Request):
     """
     Adds a new task to the reminder list.
     """
+    default_date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     data = await request.json()
     task = data.get("task")
     time = data.get("time", DEFAULT_REMINDER_TIME)  # Use default time if no time provided
+    date = data.get("date", default_date) # uses default date if none provided 
 
     if not task:
         return {"error": "Task cannot be empty"}
 
-    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    save_reminder(today, time, task)
+    save_reminder(date, time, task)
 
     return {"message": "Task added successfully!"}
 
@@ -140,6 +178,7 @@ async def list_tasks():
     tasks = reminders.get(today, [])
     return {"tasks": tasks}
 
+
 @app.get("/integration-json")
 async def get_integration_json(request: Request):
    
@@ -151,7 +190,7 @@ async def get_integration_json(request: Request):
     integration_json = {
         "data": {
             "date": {
-                "created_at": datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                "created_at": "2025-02-18",
                 "updated_at": datetime.now(timezone.utc).strftime('%Y-%m-%d')
             },
             "descriptions": {
@@ -178,7 +217,7 @@ async def get_integration_json(request: Request):
                     "label": "interval",
                     "type": "text",
                     "required": True,
-                    "default": "0 9 * * *"  # Default set to every day at 9 AM in your timezone.
+                    "default": "* * * * *"  # Default set to every minute in your timezone.
                 }
             ],
             "endpoints": [
