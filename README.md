@@ -5,6 +5,9 @@ The Daily-To-Do Reminder posts created tasks for each day to the Organizations C
 
 This is an interval integration so you have to define an interval in the settings for it to work. The default settings specify an interval field so when it is added to your organisation, you can go ahead to modify it. 
 
+## screenshots from Telex 
+[screenshot of the app working](https://drive.google.com/drive/folders/1egespr_FAOm8BXsobRiDc68R7omkVshF?usp=drive_link)
+
 ## Setting Up
 
 1. Clone the repository:
@@ -165,14 +168,5 @@ Contributions are welcome!
 This project is licensed under the **MIT License**. Feel free to use, modify, and distribute it under the terms of the license.
 
 ---
-## here are some pictures from telex 
-
-![Telex Images](images/1.png)
-![Telex Images](images/2.png)
-![Telex Images](images/3.png)
-![Telex Images](images/4.png)
-![Telex Images](images/5.png)
-![Telex Images](images/6.png)
-
 
 Happy To-Do-ing! 😊
