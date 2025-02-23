@@ -29,10 +29,13 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```bash
 pip install -r requirements.txt
 ```
+
 ## Environment Variables
 Create a `.env` file and add the following:
 
-DEFAULT_REMINDER_TIME =  your_default_reminder_time
+```env
+DEFAULT_REMINDER_TIME=your_default_reminder_time
+```
 
 ## Running the Application
 
@@ -47,9 +50,6 @@ uvicorn main:app
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-
-
-
 ## API Endpoints
 
 ### Daily To-Do Reminder
@@ -58,7 +58,7 @@ uvicorn main:app
 - `GET /list-tasks` - Get all tasks for today
 - `POST /add-task` - Create a new task
 - `POST /tick` - gets triggered by telex at intervals 
-- `GET  /integration-json` - contains a required json format for integration to telex
+- `GET /integration-json` - contains a required json format for integration to telex
 
 The server should now be running and accessible at `http://localhost:8000`.
 
@@ -124,20 +124,20 @@ The `/tick` endpoint accepts a `POST` request, when triggered by telex it return
 
 ```json
 {
-  'channel_id': '019517a3-1f98-7f76-82f2-6daba2d59fc0', 
-  'return_url': 'https://ping.telex.im/v1/return/019517a3-1f98-7f76-82f2-6daba2d59fc0', 
-   'settings': [{
-    'default': '* * * * *',
-    'label': 'interval', 
-    'required': True, 
-    'type': 'text'
-    }]
+  "channel_id": "019517a3-1f98-7f76-82f2-6daba2d59fc0", 
+  "return_url": "https://ping.telex.im/v1/return/019517a3-1f98-7f76-82f2-6daba2d59fc0", 
+  "settings": [
+    {
+      "default": "* * * * *",
+      "label": "interval", 
+      "required": true, 
+      "type": "text"
     }
+  ]
+}
 ```
 
-This data will be sent by Telex each time the cron interval is reached. The default interval is defined as `59 * * * *` which means every 59 minutes according to cron-syntax. Use https://crontab.guru for help defining cron schedules. The integration reads the settings to figure out the sites that must be called immediately, then sends a response, if any, to the `return_url` provided by Telex. 
-
-
+This data will be sent by Telex each time the cron interval is reached. The default interval is defined as `59 * * * *` which means every 59 minutes according to cron-syntax. Use https://crontab.guru for help defining cron schedules. The integration reads the settings to figure out the sites that must be called immediately, then sends a response, if any, to the `return_url` provided by Telex.
 
 ### Explanation:
 - `channel_id`: The ID of the Telex channel.
@@ -145,10 +145,10 @@ This data will be sent by Telex each time the cron interval is reached. The defa
 - `settings`: An array of settings for the daily to-do reminder. The settings are defined by the integration author and can only be used by the author. Telex only sends the settings whenever the /tick is called.
 
 ## Tests
- to run test locally: 
- 1. go to terminal
- 2. CD into project directory 
- 3. run pytest test-to-do.py
+To run tests locally: 
+1. Go to terminal
+2. CD into project directory 
+3. Run pytest test-to-do.py
 
 ## Deployment
 The API is deployed on **Render** using **Docker** to build.
@@ -161,7 +161,6 @@ Contributions are welcome!
 3. Make changes and commit (`git commit -m 'feat: Add feature'`)
 4. Push to your branch (`git push origin feature-branch`)
 5. Open a Pull Request
-
 
 ### License
 
